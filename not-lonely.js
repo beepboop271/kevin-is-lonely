@@ -14,12 +14,12 @@ discordClient.on('ready', () => {console.log('logged in');});
 let chr = String.fromCharCode;
 
 let ttsConfig = {
-  isUsing = false,
-  channel = '',
-  speaker = '',
-  conn = null,
-  voice = 'en-US-Wavenet-B',
-  lang = 'en-US'
+  isUsing: false,
+  channel: '',
+  speaker: '',
+  conn: null,
+  voice: 'en-US-Wavenet-B',
+  lang: 'en-US'
 };
 let fileName = 0;
 
@@ -31,7 +31,7 @@ async function createTTSAudio(text, callback) {
     voice: {languageCode: ttsConfig.lang, name: ttsConfig.voice},
     audioConfig: {audioEncoding: 'MP3'}
   };
-  let response = await ttsClient.synthesizeSpeech(request);
+  let [response] = await ttsClient.synthesizeSpeech(request);
 
   // write the file, add silence
   fileName = (fileName+1)%5;
@@ -41,7 +41,7 @@ async function createTTSAudio(text, callback) {
     // apparently discord.js has an issue with cutting off the end of audio
     // files and apparently it is fixed in the development version so
     // just add some silence thats good enough for me
-    process.exec(util.format('ffmpeg -i %s.mp3 -af "apad=pad_dur=1" -y -loglevel quiet %s.mp3',
+    process.exec(util.format('ffmpeg -i %s.mp3 -af "apad=pad_dur=1" -y %s.mp3',
                              chr(48+fileName), chr(97+fileName)),
                  {cwd:auth.projectPath+'audio', windowsHide:true},
                  (err, stdout, stderr) => {
@@ -64,7 +64,7 @@ discordClient.on('message', msg => {
         msg.reply('`*leave` to be lonely again, `*set-voice lang voice` to change voice (`*set-voice en-US B`)')
           .catch(console.log);
       } else if(args[0] == 'leave') {
-        usingTTS = false;
+        ttsConfig.isUsing = false;
         ttsConfig.channel = '';
         ttsConfig.speaker = '';
         ttsConfig.conn.disconnect();
@@ -101,7 +101,7 @@ discordClient.on('message', msg => {
 
       case 'im-lonely':
         if(msg.member.voiceChannel) {
-          if(!usingTTS) {
+          if(!ttsConfig.isUsing) {
             msg.member.voiceChannel.join()
             .then(voiceConn => {
               ttsConfig.isUsing = true;
