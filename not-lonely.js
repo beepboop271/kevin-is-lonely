@@ -41,7 +41,7 @@ async function createTTSAudio(text, callback) {
     // apparently discord.js has an issue with cutting off the end of audio
     // files and apparently it is fixed in the development version so
     // just add some silence thats good enough for me
-    process.exec(util.format('ffmpeg -i %s.mp3 -af "apad=pad_dur=1" -y %s.mp3',
+    process.exec(util.format('ffmpeg -i %s.mp3 -af "apad=pad_dur=1" -y -hide_banner -loglevel panic %s.mp3',
                              chr(48+fileName), chr(97+fileName)),
                  {cwd:auth.projectPath+'audio', windowsHide:true},
                  (err, stdout, stderr) => {
@@ -72,8 +72,8 @@ discordClient.on('message', msg => {
       } else if(args[0] == 'set-voice') {
         ttsConfig.lang = args[1];
         ttsConfig.voice = args[1]+'-Wavenet-'+args[2];
-        console.log(ttsVoice);
-        console.log(ttsLang);
+        console.log(ttsConfig.voice);
+        console.log(ttsConfig.lang);
       }
     } else {
       createTTSAudio(msg.content, path => {
