@@ -1,4 +1,6 @@
 # kevin-is-lonely
+# i really don't know how to do node.js properly okay read the code with that in mind
+
 i don't really use a mic so i just sit in voice channels and listen to my friends do whatever.
 sometimes when i need to talk, i'll just type into a text channel. then one day, we decided to
 create a channel #kevin-is-lonely because when i sent messages to talk to people in a voice
