@@ -74,6 +74,12 @@ discordClient.on('message', msg => {
         ttsConfig.voice = args[1]+'-Wavenet-'+args[2];
         console.log(ttsConfig.voice);
         console.log(ttsConfig.lang);
+      } else if(args[0] == 'mine-all-day') {
+        // haha yes
+        const dispatcher = ttsConfig.conn.playFile('audio/Mine All Day (Minecraft Music Video).mp3');
+        dispatcher.on('end', end => {
+          console.log('hi');
+        });
       }
     } else {
       createTTSAudio(msg.content, path => {
