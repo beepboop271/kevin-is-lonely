@@ -1,0 +1,32 @@
+{
+  "name": "kevin-is-lonely",
+  "version": "1.0.0",
+  "description": "aaaaaaaaaaaaaaaaaaaa",
+  "main": "not-lonely.js",
+  "dependencies": {
+    "@google-cloud/text-to-speech": "^2.1.2",
+    "bufferutil": "^4.0.1",
+    "discord.js": "github:discordjs/discord.js",
+    "dotenv-safe": "^8.2.0",
+    "erlpack": "github:discordapp/erlpack",
+    "libsodium-wrappers": "^0.7.6",
+    "node-opus": "^0.3.3",
+    "utf-8-validate": "^5.0.2",
+    "zlib-sync": "^0.1.6"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "start": "node not-lonely.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/beepboop271/kevin-is-lonely.git"
+  },
+  "author": "Kevin Qiao",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/beepboop271/kevin-is-lonely/issues"
+  },
+  "homepage": "https://github.com/beepboop271/kevin-is-lonely#readme"
+}
