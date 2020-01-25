@@ -9,6 +9,7 @@
     "discord.js": "github:discordjs/discord.js",
     "dotenv-safe": "^8.2.0",
     "erlpack": "github:discordapp/erlpack",
+    "hashmap": "^2.4.0",
     "libsodium-wrappers": "^0.7.6",
     "node-opus": "^0.3.3",
     "utf-8-validate": "^5.0.2",

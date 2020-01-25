@@ -1,142 +1,153 @@
-const fs = require("fs");
+// for creating streams to pass into discord voice
+const stream = require("stream");
+// for converting ArrayBuffer into Buffer because
+// they are surprisingly not similar
+const buffer = require("buffer");
+// for format strings :)
 const util = require("util");
 
+// for gcloud and discord authentication
+// loads module and adds env vars immediately
 require("dotenv-safe").config();
+// for storing many ongoing tts sessions
+const HashMap = require("hashmap");
+const ttsConfigs = new HashMap();
+// ... yes
 const Discord = require("discord.js");
-const Tts = require("@google-cloud/text-to-speech");
-
 const discordClient = new Discord.Client();
+// ... yes but again
+const Tts = require("@google-cloud/text-to-speech")
+const ttsClient = new Tts.TextToSpeechClient();
+
+
+
+function addConfig(channel, speaker, conn) {
+  let config = {
+    channel: channel,
+    speaker: speaker,
+    conn: conn,
+    voice: "en-US-Wavenet-B",
+    lang: "en-US"
+  };
+  ttsConfigs.set(channel, config);
+}
+
+async function createTTSAudio(text, config) {
+  // gets the mp3 audio of the requested text
+  // using the configuration's language and voice
+  try {
+    let [response] = await ttsClient.synthesizeSpeech({
+      input: { text: text },
+      voice: { languageCode: config.lang, name: config.voice },
+      audioConfig: { audioEncoding: "MP3" }
+    });
+
+    // create a stream for discord voice and convert
+    // gcloud response (ArrayBuffer) -convert-> Buffer -write-to-> stream
+    let audioStream = new stream.PassThrough({ highWaterMark: 65536 });
+    audioStream.end(buffer.Buffer.from(response.audioContent.buffer));
+    // implicitly makes a promise or something? :/
+    return audioStream;
+  } catch (err) {
+    // gcloud tts might fail if someone sets voice/lang
+    // wrong or smth dumb like that lol
+    console.log(err);
+  }
+}
+
+
+
+discordClient.on("message", async (msg) => {
+  if (!msg.guild) return;  // only respond to non dm (server) messages
+
+  let config = ttsConfigs.get(msg.channel.id);
+  if (config && msg.author.id == config.speaker) {
+    // if in speaking mode
+    if (msg.content.substring(0, 1) == "*") {
+      args = msg.content.substring(1).split(" ");
+      try {
+        switch (args[0]) {
+          case "help":
+            await msg.reply("`*leave` to be lonely again, `*set-voice voice [lang]` to change voice (`*set-voice B en-US`)");
+            break;
+          case "leave":
+            config.conn.disconnect();
+            ttsConfigs.remove(msg.channel.id);
+            break;
+          case "set-voice":
+            if (args.length > 2) {
+              config.lang = args[2];
+            }
+            config.voice = config.lang+"-Wavenet-"+args[1];
+            break;
+          case "reset-voice":
+            config.voice = "en-US-Wavenet-B";
+            config.lang = "en-US";
+            break;
+          case "mine-all-day":
+            // haha yes
+            config.conn.play("Mine All Day (Minecraft Music Video).mp3");
+            break;
+          default:
+            await msg.reply("unknown command "+args[0]);
+        }
+      } catch (err) {
+        // msg sending basically never fails in usual
+        // conditions why am i doing this ahhhhhhhh
+        console.log(err);
+      }
+    } else {
+      // speak all non-command messages
+      // technically all messages that don't begin with '*'
+      createTTSAudio(msg.content, config).then(stream => {
+        config.conn.play(stream, { seek: 0, volume: 1 });
+      });
+    }
+  } else if (msg.content.substring(0, 1) == "*") {
+    // if not in speaking mode
+    let args = msg.content.substring(1).split(" ");
+    try {
+      switch (args[0]) {
+        case "ping":
+          // get the time of the "*ping" message
+          let startTime = Discord.SnowflakeUtil.deconstruct(msg.id).timestamp;
+          let response = await msg.channel.send("pong uwu");
+          // take the "pong uwu" response message object and find the
+          // timestamp get time delta between ping and pong,
+          // edit the pong message to include the time
+          let endTime = Discord.SnowflakeUtil.deconstruct(response.id).timestamp;
+          await response.edit(util.format("pong uwu: %dms", endTime-startTime));
+          break;
+        case "im-lonely":
+          if (msg.member.voice.channel) {
+            addConfig(
+              msg.channel.id,
+              msg.author.id,
+              await msg.member.voice.channel.join()
+            );
+            await msg.channel.send("voice channel joined");
+          } else {
+            await msg.reply("you are not in a voice channel");
+          }
+          break;
+        case "help":
+          await msg.reply("`*ping` to ping, `*im-lonely` to be less lonely");
+          break;
+        default:
+          await msg.reply("unknown command "+args[0]);
+      }
+    } catch (err) {
+      // random errors in sending messages or editing
+      // or whatever, nothing we can do but catch and log
+      console.log(err);
+    }
+  }
+});
+
 discordClient.on("ready", () => {
   console.log("logged in");
 });
 
-// chr(x) from python, idk
-// i just didn't want to type so much
-let chr = String.fromCharCode;
 
-let ttsConfig = {
-  isUsing: false,
-  channel: "",
-  speaker: "",
-  conn: null,
-  voice: "en-US-Wavenet-B",
-  lang: "en-US"
-};
-let fileName = 0;
-
-async function createTTSAudio(text, callback) {
-  // google cloud stuff
-  let ttsClient = new Tts.TextToSpeechClient();
-  let request = {
-    input: { text: text },
-    voice: { languageCode: ttsConfig.lang, name: ttsConfig.voice },
-    audioConfig: { audioEncoding: "MP3" }
-  };
-  let [response] = await ttsClient.synthesizeSpeech(request);
-
-  // write the file, add silence
-  fileName = (fileName + 1) % 5;
-  let path = "audio/" + chr(48 + fileName) + ".mp3";
-  fs.writeFile(path, response.audioContent, "binary", err => {
-    if (err) console.log(err);
-    callback(util.format("audio/%s.mp3", chr(48 + fileName)));
-
-    // discord.js stable version has bug where short files are
-    // cut off, issue is fixed in master so this sketchy
-    // ffmpeg re-encoding is no longer needed
-    // ChildProcess.exec(
-    //     util.format('ffmpeg -i %s.mp3 -af "apad=pad_dur=1" -y -hide_banner -loglevel panic %s.mp3',
-    //                 chr(48+fileName), chr(97+fileName)),
-    //     {cwd:auth.projectPath+'audio', windowsHide:true},
-    //     (err, stdout, stderr) => {
-    //       if(err) console.log(err);
-    //       callback(util.format('audio/%s.mp3', chr(97+fileName)));
-    //     }
-    // );
-  });
-}
-
-discordClient.on("message", msg => {
-  if (!msg.guild) return;
-
-  // if we need to speak this message
-  if (ttsConfig.isUsing
-        && msg.channel.id == ttsConfig.channel
-        && msg.author.id == ttsConfig.speaker) {
-    if (msg.content.substring(0, 1) == "*") {
-      args = msg.content.substring(1).split(" ");
-
-      if (args[0] == "help") {
-        msg.reply("`*leave` to be lonely again, `*set-voice lang voice` to change voice (`*set-voice en-US B`)")
-          .catch(console.log);
-      } else if (args[0] == "leave") {
-        ttsConfig.isUsing = false;
-        ttsConfig.channel = "";
-        ttsConfig.speaker = "";
-        ttsConfig.conn.disconnect();
-        ttsConfig.conn = null;
-      } else if (args[0] == "set-voice") {
-        ttsConfig.lang = args[1];
-        ttsConfig.voice = args[1] + "-Wavenet-" + args[2];
-        console.log(ttsConfig.voice);
-        console.log(ttsConfig.lang);
-      } else if (args[0] == "mine-all-day") {
-        // haha yes
-        ttsConfig.conn.play("audio/Mine All Day (Minecraft Music Video).mp3");
-      }
-    } else {
-      createTTSAudio(msg.content, path => {
-        ttsConfig.conn.play(path);
-      });
-    }
-  } else if (msg.content.substring(0, 1) == "*") {
-    let args = msg.content.substring(1).split(" ");
-
-    switch (args[0]) {
-      case "ping":
-        let startTime = Discord.SnowflakeUtil.deconstruct(msg.id).timestamp;
-        msg.channel
-          .send("pong uwu")
-          .then(response => {
-            response.edit(
-              "pong uwu: "
-              + (Discord.SnowflakeUtil.deconstruct(response.id).timestamp-startTime).toString()
-              + "ms"
-            );
-          })
-          .catch(console.log);
-        break;
-      case "im-lonely":
-        if (msg.member.voice.channel) {
-          if (!ttsConfig.isUsing) {
-            msg.member.voice.channel
-              .join()
-              .then(voiceConn => {
-                ttsConfig.isUsing = true;
-                ttsConfig.channel = msg.channel.id;
-                ttsConfig.speaker = msg.author.id;
-                ttsConfig.conn = voiceConn;
-                msg.channel.send("voice channel joined");
-              })
-              .catch(console.log);
-          } else {
-            msg.reply("tts is being used by someone else and my node.js skills are nonexistent")
-              .catch(console.log);
-          }
-        } else {
-          msg.reply("you are not in a voice channel")
-            .catch(console.log);
-        }
-        break;
-      case "help":
-        msg.reply("`*ping` to ping, `*im-lonely` to be less lonely")
-          .catch(console.log);
-        break;
-      default:
-        msg.reply("unknown command "+args[0])
-          .catch(console.log);
-    }
-  }
-});
 
 discordClient.login(process.env.DISCORD_BOT_TOKEN);
