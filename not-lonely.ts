@@ -3,9 +3,8 @@ import { PassThrough as PassThroughStream } from "stream";
 // for converting ArrayBuffer into Buffer because
 // they are surprisingly not similar
 import { Buffer } from "buffer";
-// const buffer = require("buffer");
 // for format strings :)
-const util = require("util");
+import util from "util";
 
 // for gcloud and discord authentication
 // loads module and adds env vars immediately
@@ -29,44 +28,44 @@ import TtsConfig from "./TtsConfig";
 async function createTTSAudio(text: string, config: TtsConfig): Promise<PassThroughStream> {
   // gets the mp3 audio of the requested text
   // using the configuration's language and voice
-  try {
-    let [response] = await ttsClient.synthesizeSpeech({
-      input: { text: text },
-      voice: { languageCode: config.lang, name: config.voice },
-      // wtf google cloud (declares enum type on audioEncoding
-      // but guides show passing string)
-      audioConfig: { audioEncoding: 2 }  // "MP3" }
-    });
+  return new Promise<PassThroughStream>(async (resolve: Function, reject: Function) => {
+    try {
+      let [response] = await ttsClient.synthesizeSpeech({
+        input: { text: text},
+        voice: { languageCode: config.lang, name: config.voice },
+        // wtf google cloud (declares enum type on audioEncoding
+        // but guides show passing string)
+        audioConfig: { audioEncoding: 2 }  // "MP3" }
+      });
 
-    if (response.audioContent) {
-      // create a stream for discord voice and convert
-      // gcloud response (ArrayBuffer) -convert-> Buffer -write-to-> stream
-      let audioStream: PassThroughStream = new PassThroughStream({ highWaterMark: 65536 });
-      audioStream.end(Buffer.from(response.audioContent.buffer));
-      // implicitly makes a promise or something? :/
-      return audioStream;
-    } else {
-      throw new Error("audioContent is undefined");
+      if (response.audioContent) {
+        // create a stream for discord voice and convert
+        // gcloud response (ArrayBuffer) -convert-> Buffer -write-to-> stream
+        let audioStream: PassThroughStream = new PassThroughStream({ highWaterMark: 65536 });
+        audioStream.end(Buffer.from(response.audioContent.buffer));
+        resolve(audioStream);
+      } else {
+        reject(new Error("audioContent is undefined"));
+      }
+    } catch (err) {
+      // gcloud tts might fail if someone sets voice/lang
+      // wrong or smth dumb like that lol
+      config.setLang("en-US");
+      config.setVoiceOption("B");
+      console.log("reset voice to default");
+      reject(err);
     }
-  } catch (err) {
-    // gcloud tts might fail if someone sets voice/lang
-    // wrong or smth dumb like that lol
-    console.log(err);
-    config.setLang("en-US");
-    config.setVoiceOption("B");
-    console.log("reset voice to default");
-    return new Promise((resolve, reject) => {
-      // scuffed, but i dont know any other way to do it
-      // who knows, maybe this is what you're supposed to do
-      reject();
-    });
-  }
+  });
 }
 
 
 
 discordClient.on("message", async (msg: Message) => {
-  if (!msg.member) return;  // only respond to non dm (server) messages
+  if (!msg.member) {
+    // only respond to non dm (server) messages
+    console.log(msg);
+    return;
+  }
 
   let config: TtsConfig = ttsConfigs.get(msg.channel.id);
   if (config && msg.author.id == config.speaker) {
@@ -83,16 +82,13 @@ discordClient.on("message", async (msg: Message) => {
             ttsConfigs.remove(msg.channel.id);
             break;
           case "set-voice":
+            // not the best error checking but better than nothing
             if (args.length > 2) {
               if (!config.setLang(args[2])) {
-                // note: can return true on an invalid lang, oh well
-                // this is better than nothing
                 await msg.reply("invalid lang (expected something like en-US)");
               }
             }
             if (!config.setVoiceOption(args[1])) {
-              // note: can return true on an invalid voice, oh well
-              // this is better than nothing
               await msg.reply("invalid voice (expected one character a to f)");
             }
             break;
@@ -115,13 +111,18 @@ discordClient.on("message", async (msg: Message) => {
     } else {
       // speak all non-command messages
       // technically all messages that don't begin with '*'
-      createTTSAudio(msg.content, config).then((stream: PassThroughStream) => {
-        if (!stream) {
+      createTTSAudio(msg.content, config)
+        .then((stream: PassThroughStream) => {
+          if (!stream) {
+            msg.channel.send("failed to send");
+          } else {
+            config.conn.play(stream, { seek: 0, volume: 1 });
+          }
+        })
+        .catch((err: any) => {
+          console.log(err);
           msg.channel.send("failed to send");
-        } else {
-          config.conn.play(stream, { seek: 0, volume: 1 });
-        }
-      }).catch(console.log);  // scuffed, but i dont know any other way to do it
+        });
     }
   } else if (msg.content.substring(0, 1) == "*") {
     // if not in speaking mode
@@ -156,8 +157,6 @@ discordClient.on("message", async (msg: Message) => {
         case "help":
           await msg.reply("`*ping` to ping, `*im-lonely` to be less lonely");
           break;
-        default:
-          await msg.reply("unknown command "+args[0]);
       }
     } catch (err) {
       // random errors in sending messages or editing

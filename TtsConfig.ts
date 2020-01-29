@@ -17,26 +17,23 @@ export default class TtsConfig {
   }
 
   setLang(lang: string): boolean {
-    if (lang.length != 5) {
+    lang = lang.toLowerCase();
+    let match: RegExpMatchArray|null = lang.match(/([a-z]{2}|cmn)-([a-z]{2})/);
+    if (!match) {
       return false;
     }
-    if (!lang.match(/^[a-z][a-z]-[A-Z][A-Z]$/)) {
-      return false;
-    }
-    this._lang = lang;
+
+    this._lang = match[1]+"-"+match[2].toUpperCase();
     this._voice = this._lang+"-Wavenet-"+this._voiceOption;
     return true;
   }
 
   setVoiceOption(voiceOption: string): boolean {
-    if (voiceOption.length > 1) {
+    if (!voiceOption.match(/^[a-f]$/i)) {
       return false;
     }
-    voiceOption = voiceOption.toUpperCase();
-    if ((voiceOption.charCodeAt(0) < 65) || (voiceOption.charCodeAt(0) > 70)) {
-      return false;
-    }
-    this._voiceOption = voiceOption;
+    
+    this._voiceOption = voiceOption.toUpperCase();
     this._voice = this._lang+"-Wavenet-"+this._voiceOption;
     return true;
   }
