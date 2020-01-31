@@ -35,7 +35,7 @@ async function createTTSAudio(text: string, config: TtsConfig): Promise<PassThro
         voice: { languageCode: config.lang, name: config.voice },
         // wtf google cloud (declares enum type on audioEncoding
         // but guides show passing string)
-        audioConfig: { audioEncoding: 2 }  // "MP3" }
+        audioConfig: { audioEncoding: 2, pitch: config.pitch, speakingRate: 1 }  // "MP3" }
       });
 
       if (response.audioContent) {
@@ -50,8 +50,7 @@ async function createTTSAudio(text: string, config: TtsConfig): Promise<PassThro
     } catch (err) {
       // gcloud tts might fail if someone sets voice/lang
       // wrong or smth dumb like that lol
-      config.setLang("en-US");
-      config.setVoiceOption("B");
+      config.reset();
       console.log("reset voice to default");
       reject(err);
     }
@@ -92,16 +91,18 @@ discordClient.on("message", async (msg: Message) => {
               await msg.reply("invalid voice (expected one character a to f)");
             }
             break;
+          case "set-pitch":
+            if (!config.setPitch(Number(args[1]))) {
+              await msg.reply("invalid pitch (expected a number -20.0 to 20.0)");
+            }
+            break;
           case "reset-voice":
-            config.setLang("en-US");
-            config.setVoiceOption("B");
+            config.reset();
             break;
           case "mine-all-day":
             // haha yes
             config.conn.play("Mine All Day (Minecraft Music Video).mp3");
             break;
-          default:
-            await msg.reply("unknown command "+args[0]);
         }
       } catch (err) {
         // msg sending basically never fails in usual

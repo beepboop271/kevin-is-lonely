@@ -4,16 +4,27 @@ export default class TtsConfig {
   readonly channel: string;
   readonly speaker: string;
   readonly conn: VoiceConnection;
-  private _voice: string;
-  private _lang: string;
-  private _voiceOption: string;
+
+  // ! before : annotates that variables are in fact being
+  // initialized even though it may not seem like it in
+  // the constructor
+  private _voice!: string;
+  private _lang!: string;
+  private _voiceOption!: string;
+  private _pitch!: number;
+
   constructor (channel: string, speaker: string, conn: VoiceConnection) {
     this.channel = channel;
     this.speaker = speaker;
     this.conn = conn;
+    this.reset();
+  }
+
+  reset(): void {
     this._lang = "en-US";
     this._voiceOption = "B";
     this._voice = "en-US-Wavenet-B";
+    this._pitch = 0;
   }
 
   setLang(lang: string): boolean {
@@ -38,11 +49,26 @@ export default class TtsConfig {
     return true;
   }
 
+  setPitch(pitch: number): boolean {
+    if (Number.isNaN(pitch)) {
+      return false;
+    }
+    if (Math.abs(pitch) > 20) {
+      pitch = Math.sign(pitch)*20;
+    }
+    this._pitch = pitch;
+    return true;
+  }
+
   get voice() {
     return this._voice;
   }
 
   get lang() {
     return this._lang;
+  }
+
+  get pitch() {
+    return this._pitch;
   }
 }
