@@ -9,9 +9,6 @@ import util from "util";
 // for gcloud and discord authentication
 // loads module and adds env vars immediately
 require("dotenv-safe").config();
-// for storing many ongoing tts sessions
-const HashMap = require("hashmap");
-const ttsConfigs = new HashMap();
 
 // ... yes
 import { Message, SnowflakeUtil, Client as DiscordClient } from "discord.js";
@@ -21,21 +18,28 @@ import { TextToSpeechClient } from "@google-cloud/text-to-speech/build/src/v1";
 import { TextToSpeechClient as GCloudTTSClient } from "@google-cloud/text-to-speech";
 const ttsClient: TextToSpeechClient = new GCloudTTSClient();
 
-import TtsConfig from "./TtsConfig";
+import UserTtsConfig from "./UserTtsConfig";
+import ServerTtsConfig from "./ServerTtsConfig";
+
+// for storing many ongoing tts sessions
+const serverTtsConfigs = new Map<String, ServerTtsConfig>();
 
 
-
-async function createTTSAudio(text: string, config: TtsConfig): Promise<PassThroughStream> {
+async function createTTSAudio(text: string, config: UserTtsConfig): Promise<PassThroughStream> {
   // gets the mp3 audio of the requested text
   // using the configuration's language and voice
   return new Promise<PassThroughStream>(async (resolve: Function, reject: Function) => {
     try {
       let [response] = await ttsClient.synthesizeSpeech({
-        input: { text: text},
+        input: { text: text },
         voice: { languageCode: config.lang, name: config.voice },
         // wtf google cloud (declares enum type on audioEncoding
         // but guides show passing string)
-        audioConfig: { audioEncoding: 2, pitch: config.pitch, speakingRate: 1 }  // "MP3" }
+        audioConfig: {
+          audioEncoding: 2,
+          pitch: config.pitch,
+          speakingRate: config.speed
+        } // "MP3" }
       });
 
       if (response.audioContent) {
@@ -66,66 +70,74 @@ discordClient.on("message", async (msg: Message) => {
     return;
   }
 
-  let config: TtsConfig = ttsConfigs.get(msg.channel.id);
-  if (config && msg.author.id == config.speaker) {
-    // if in speaking mode
-    if (msg.content.substring(0, 1) == "*") {
-      let args: string[] = msg.content.substring(1).split(" ");
-      try {
-        switch (args[0]) {
-          case "help":
-            await msg.reply("`*leave` to be lonely again, `*set-voice voice [lang]` to change voice (`*set-voice B en-US`)");
-            break;
-          case "leave":
-            config.conn.disconnect();
-            ttsConfigs.remove(msg.channel.id);
-            break;
-          case "set-voice":
-            // not the best error checking but better than nothing
-            if (args.length > 2) {
-              if (!config.setLang(args[2])) {
-                await msg.reply("invalid lang (expected something like en-US)");
+  // msg.guild is not null because we checked msg.member
+  let serverConfig: ServerTtsConfig|undefined = serverTtsConfigs.get(msg.guild!.id);
+  let userConfig: UserTtsConfig|undefined;
+  if (serverConfig && (msg.channel.id == serverConfig.channel)) {
+    userConfig = serverConfig.getUserConfig(msg.author.id);
+    if (userConfig) {
+      // if in speaking mode
+      if (msg.content.substring(0, 1) == "*") {
+        let args: string[] = msg.content.substring(1).split(" ");
+        try {
+          switch (args[0]) {
+            case "help":
+              await msg.reply("`*leave` to be lonely again, `*set-voice voice [lang]` to change voice (`*set-voice B en-US`)");
+              break;
+            case "leave":
+              if (serverConfig.deleteUser(msg.author.id)) {
+                serverTtsConfigs.delete(msg.guild!.id);
               }
-            }
-            if (!config.setVoiceOption(args[1])) {
-              await msg.reply("invalid voice (expected one character a to f)");
-            }
-            break;
-          case "set-pitch":
-            if (!config.setPitch(Number(args[1]))) {
-              await msg.reply("invalid pitch (expected a number -20.0 to 20.0)");
-            }
-            break;
-          case "reset-voice":
-            config.reset();
-            break;
-          case "mine-all-day":
-            // haha yes
-            config.conn.play("Mine All Day (Minecraft Music Video).mp3");
-            break;
-        }
-      } catch (err) {
-        // msg sending basically never fails in usual
-        // conditions why am i doing this ahhhhhhhh
-        console.log(err);
-      }
-    } else {
-      // speak all non-command messages
-      // technically all messages that don't begin with '*'
-      createTTSAudio(msg.content, config)
-        .then((stream: PassThroughStream) => {
-          if (!stream) {
-            msg.channel.send("failed to send");
-          } else {
-            config.conn.play(stream, { seek: 0, volume: 1 });
+              break;
+            case "set-voice":
+              // not the best error checking but better than nothing
+              if (args.length > 2) {
+                if (!userConfig.setLang(args[2])) {
+                  await msg.reply("invalid lang (expected something like en-US)");
+                }
+              }
+              if (!userConfig.setVoiceOption(args[1])) {
+                await msg.reply("invalid voice (expected one character a to f)");
+              }
+              break;
+            case "set-pitch":
+              if (!userConfig.setPitch(Number(args[1]))) {
+                await msg.reply("invalid pitch (expected a number -20.0 to 20.0)");
+              }
+              break;
+            case "set-speed":
+              if (!userConfig.setSpeed(Number(args[1]))) {
+                await msg.reply("invalid speed (expeceted a number 0.25 to 4)");
+              }
+              break;
+            case "reset-voice":
+              userConfig.reset();
+              break;
+            case "mine-all-day":
+              // haha yes
+              // serverConfig.conn.play("Mine All Day (Minecraft Music Video).mp3");
+              break;
           }
-        })
-        .catch((err: any) => {
+        } catch (err) {
+          // msg sending basically never fails in usual
+          // conditions why am i doing this ahhhhhhhh
           console.log(err);
-          msg.channel.send("failed to send");
-        });
+        }
+      } else {
+        // speak all non-command messages
+        // technically all messages that don't begin with '*'
+        try {
+          // let ttsStream: PassThroughStream = await createTTSAudio(msg.content, userConfig)
+          // serverConfig.conn.play(ttsStream);
+          serverConfig.playMessage(await createTTSAudio(msg.content, userConfig));
+        } catch (err) {
+          console.log(err);
+          msg.channel.send("failed to send: "+err.message);
+        }
+      }
     }
-  } else if (msg.content.substring(0, 1) == "*") {
+  }
+  if (!userConfig && msg.content.substring(0, 1) == "*") {
     // if not in speaking mode
     let args: string[] = msg.content.substring(1).split(" ");
     try {
@@ -142,15 +154,26 @@ discordClient.on("message", async (msg: Message) => {
           break;
         case "im-lonely":
           if (msg.member.voice.channel) {
-            ttsConfigs.set(
-              msg.channel.id,
-              new TtsConfig(
+            if (serverConfig) {
+              if (serverConfig.channel == msg.member.voice.channel.id) {
+                serverConfig.addUser(msg.author.id);
+                await msg.channel.send("added user");
+              } else {
+                await msg.reply("bot in use in another channel already");
+              }
+            } else {
+              let newServerConfig: ServerTtsConfig = new ServerTtsConfig(
                 msg.channel.id,
-                msg.author.id,
                 await msg.member.voice.channel.join()
-              )
-            );
-            await msg.channel.send("voice channel joined");
+              );
+              newServerConfig.addUser(msg.author.id);
+              serverTtsConfigs.set(
+                msg.guild!.id,
+                newServerConfig
+              );
+
+              await msg.channel.send("voice channel joined");
+            }
           } else {
             await msg.reply("you are not in a voice channel");
           }

@@ -1,10 +1,4 @@
-import { VoiceConnection } from "discord.js";
-
-export default class TtsConfig {
-  readonly channel: string;
-  readonly speaker: string;
-  readonly conn: VoiceConnection;
-
+export default class UserTtsConfig {
   // ! before : annotates that variables are in fact being
   // initialized even though it may not seem like it in
   // the constructor
@@ -12,11 +6,9 @@ export default class TtsConfig {
   private _lang!: string;
   private _voiceOption!: string;
   private _pitch!: number;
+  private _speed!: number;
 
-  constructor (channel: string, speaker: string, conn: VoiceConnection) {
-    this.channel = channel;
-    this.speaker = speaker;
-    this.conn = conn;
+  constructor() {
     this.reset();
   }
 
@@ -25,6 +17,7 @@ export default class TtsConfig {
     this._voiceOption = "B";
     this._voice = "en-US-Wavenet-B";
     this._pitch = 0;
+    this._speed = 1;
   }
 
   setLang(lang: string): boolean {
@@ -60,6 +53,20 @@ export default class TtsConfig {
     return true;
   }
 
+  setSpeed(speed: number): boolean {
+    if (Number.isNaN(speed)) {
+      return false;
+    }
+    if (speed < 0.25) {
+      this._speed = 0.25;
+    } else if (speed > 4) {
+      this._speed = 4;
+    } else {
+      this._speed = speed;
+    }
+    return true;
+  }
+
   get voice() {
     return this._voice;
   }
@@ -70,5 +77,9 @@ export default class TtsConfig {
 
   get pitch() {
     return this._pitch;
+  }
+
+  get speed() {
+    return this._speed;
   }
 }
