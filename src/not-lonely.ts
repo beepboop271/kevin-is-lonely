@@ -10,7 +10,6 @@ import util from "util";
 // loads module and adds env vars immediately
 require("dotenv-safe").config();
 
-// ... yes
 import { Message, SnowflakeUtil, Client as DiscordClient } from "discord.js";
 const discordClient: DiscordClient = new DiscordClient();
 
@@ -23,6 +22,7 @@ import ServerTtsConfig from "./ServerTtsConfig";
 
 // for storing many ongoing tts sessions
 const serverTtsConfigs = new Map<String, ServerTtsConfig>();
+
 
 
 async function createTTSAudio(text: string, config: UserTtsConfig): Promise<PassThroughStream> {
@@ -113,10 +113,6 @@ discordClient.on("message", async (msg: Message) => {
             case "reset-voice":
               userConfig.reset();
               break;
-            case "mine-all-day":
-              // haha yes
-              // serverConfig.conn.play("Mine All Day (Minecraft Music Video).mp3");
-              break;
           }
         } catch (err) {
           // msg sending basically never fails in usual
@@ -127,8 +123,6 @@ discordClient.on("message", async (msg: Message) => {
         // speak all non-command messages
         // technically all messages that don't begin with '*'
         try {
-          // let ttsStream: PassThroughStream = await createTTSAudio(msg.content, userConfig)
-          // serverConfig.conn.play(ttsStream);
           serverConfig.playMessage(await createTTSAudio(msg.content, userConfig));
         } catch (err) {
           console.log(err);
@@ -171,7 +165,6 @@ discordClient.on("message", async (msg: Message) => {
                 msg.guild!.id,
                 newServerConfig
               );
-
               await msg.channel.send("voice channel joined");
             }
           } else {
