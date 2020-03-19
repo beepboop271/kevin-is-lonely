@@ -66,14 +66,14 @@ async function createTTSAudio(text: string, config: UserTtsConfig): Promise<Pass
 discordClient.on("message", async (msg: Message) => {
   if (!msg.member) {
     // only respond to non dm (server) messages
-    console.log(msg);
+    console.log(`DM: ${msg.author.username}:\n${msg.content}\n`);
     return;
   }
 
   // msg.guild is not null because we checked msg.member
   let serverConfig: ServerTtsConfig|undefined = serverTtsConfigs.get(msg.guild!.id);
   let userConfig: UserTtsConfig|undefined;
-  if (serverConfig && (msg.channel.id == serverConfig.channel)) {
+  if (serverConfig && (msg.channel.id == serverConfig.textChannel)) {
     userConfig = serverConfig.getUserConfig(msg.author.id);
     if (userConfig) {
       // if in speaking mode
@@ -149,7 +149,7 @@ discordClient.on("message", async (msg: Message) => {
         case "im-lonely":
           if (msg.member.voice.channel) {
             if (serverConfig) {
-              if (serverConfig.channel == msg.member.voice.channel.id) {
+              if (serverConfig.voiceChannel == msg.member.voice.channel.id) {
                 serverConfig.addUser(msg.author.id);
                 await msg.channel.send("added user");
               } else {
@@ -157,6 +157,7 @@ discordClient.on("message", async (msg: Message) => {
               }
             } else {
               let newServerConfig: ServerTtsConfig = new ServerTtsConfig(
+                msg.member.voice.channel.id,
                 msg.channel.id,
                 await msg.member.voice.channel.join()
               );

@@ -4,15 +4,17 @@ import UserTtsConfig from "./UserTtsConfig";
 import CircularQueue from "./CircularQueue";
 
 export default class ServerTtsConfig {
-  readonly channel: string;
+  readonly voiceChannel: string;
+  readonly textChannel: string;
   private readonly _conn: VoiceConnection;
 
   private _users: Map<String, UserTtsConfig>;
   private _dispatcher: StreamDispatcher|null;
   private _streamQueue: CircularQueue<PassThroughStream>;
 
-  constructor(channel: string, conn: VoiceConnection) {
-    this.channel = channel;
+  constructor(voiceChannel: string, textChannel: string, conn: VoiceConnection) {
+    this.voiceChannel = voiceChannel;
+    this.textChannel = textChannel;
     this._conn = conn;
     this._users = new Map<String, UserTtsConfig>();
     this._dispatcher = null;
