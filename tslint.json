@@ -1,0 +1,46 @@
+{
+  "defaultSeverity": "error",
+  "extends": ["tslint:all"],
+  "jsRules": {},
+  "rules": {
+    "no-console": false,
+    "prefer-function-over-method": false,
+    "completed-docs": false,
+    "comment-format": false,
+    "max-classes-per-file": false,
+    "no-bitwise": false,
+    "newline-per-chained-call": false,
+    "no-unbound-method": [true, "ignore-static"],
+    "variable-name": [true, "allow-leading-underscore"],
+    "member-ordering": [true, { "order": "fields-first" }],
+    "no-non-null-assertion": false, // typescript is not always able to know, which is the whole point of the assertion operator
+    "typedef": [
+      true,
+      [
+        "call-signature",
+        "arrow-call-signature",
+        "parameter",
+        "arrow-parameter",
+        "property-declaration",
+        "variable-declaration",
+        "variable-declaration-ignore-function",
+        "member-variable-declaration",
+        "object-destructuring",
+        "array-destructuring"
+      ]
+    ],
+    "trailing-comma": [
+      true,
+      {
+        "multiline": {
+          "objects": "always",
+          "arrays": "always",
+          "typeLiterals": "always",
+          "functions": "never"
+        },
+        "esSpecCompliant": true
+      }
+    ]
+  },
+  "rulesDirectory": []
+}
