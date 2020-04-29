@@ -61,7 +61,7 @@ export class ServerTtsConfig extends ServerConfig<ITtsRequest> {
   protected async fetchStream(data: ITtsRequest): Promise<PassThroughStream> {
     // gets the mp3 audio of the requested text
     // using the configuration's language and voice
-    return new Promise<PassThroughStream>(async (resolve, reject) => {
+    return new Promise<PassThroughStream>(async (resolve, reject): Promise<void> => {
       try {
         const [response] = await this._ttsClient.synthesizeSpeech({
           // wtf google cloud (declares enum type on audioEncoding

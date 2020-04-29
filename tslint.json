@@ -3,32 +3,19 @@
   "extends": ["tslint:all"],
   "jsRules": {},
   "rules": {
-    "no-console": false,
-    "prefer-function-over-method": false,
     "completed-docs": false,
+    "cyclomatic-complexity": false,
+    "no-console": false,
+    "no-magic-numbers": false,
+    "no-non-null-assertion": false, // typescript is not always able to know, which is the whole point of the assertion operator
+    "no-unbound-method": false,
+
     "comment-format": false,
     "max-classes-per-file": false,
-    "no-bitwise": false,
-    "newline-per-chained-call": false,
-    "no-unbound-method": [true, "ignore-static"],
-    "variable-name": [true, "allow-leading-underscore"],
     "member-ordering": [true, { "order": "fields-first" }],
-    "no-non-null-assertion": false, // typescript is not always able to know, which is the whole point of the assertion operator
-    "typedef": [
-      true,
-      [
-        "call-signature",
-        "arrow-call-signature",
-        "parameter",
-        "arrow-parameter",
-        "property-declaration",
-        "variable-declaration",
-        "variable-declaration-ignore-function",
-        "member-variable-declaration",
-        "object-destructuring",
-        "array-destructuring"
-      ]
-    ],
+    "newline-per-chained-call": false,
+    "no-bitwise": false,
+    "prefer-function-over-method": false,
     "trailing-comma": [
       true,
       {
@@ -40,7 +27,13 @@
         },
         "esSpecCompliant": true
       }
-    ]
+    ],
+    "typedef": [
+      true, // to be used with noImplicitAny or strict
+      "call-signature",
+      "arrow-call-signature"
+    ],
+    "variable-name": [true, "allow-leading-underscore"]
   },
   "rulesDirectory": []
 }

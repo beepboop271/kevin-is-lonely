@@ -1,9 +1,7 @@
-// for gcloud and discord authentication
-// loads module and adds env vars immediately
-require("dotenv-safe").config();
 // actual class
 import { TextToSpeechClient as GCloudTTSClient } from "@google-cloud/text-to-speech";
 // type definition :/
+// tslint:disable-next-line:no-submodule-imports
 import { TextToSpeechClient } from "@google-cloud/text-to-speech/build/src/v1";
 import {
   Client as DiscordClient,
@@ -12,23 +10,22 @@ import {
   SnowflakeUtil,
   TextChannel,
 } from "discord.js";
+import { config as loadEnv } from "dotenv-safe";
 
 import { ServerConfig } from "./ServerConfig";
 import { ServerMusicConfig } from "./ServerMusicConfig";
 import { ServerTtsConfig } from "./ServerTtsConfig";
 import { UserTtsConfig } from "./UserTtsConfig";
 
+loadEnv();
+
 const discordClient: DiscordClient = new DiscordClient();
 const ttsClient: TextToSpeechClient = new GCloudTTSClient();
 
 // for storing many ongoing tts sessions
-// ServerConfig<any> because typescript doesn't seem to
-// allow unspecified generic types on an abstract class
-// even though all the implementing classes have a type?
-const serverConfigs = new Map<string, ServerConfig<any>>();
+const serverConfigs = new Map<string, ServerConfig<unknown>>();
 
-// tslint:disable-next-line:cyclomatic-complexity
-discordClient.on("message", async (msg: Message) => {
+discordClient.on("message", async (msg: Message): Promise<void> => {
   if (msg.member === null || msg.guild === null) {
     // only respond to non dm (server) messages
     // msg.guild check is redundant but helps ts know it's null too
@@ -42,7 +39,7 @@ discordClient.on("message", async (msg: Message) => {
     } (${msg.member.nickname})\n${msg.content}`
   );
   if (msg.attachments.size > 0) {
-    msg.attachments.forEach((attachment: MessageAttachment) => {
+    msg.attachments.forEach((attachment: MessageAttachment): void => {
       console.log(attachment.proxyURL);
       console.log("\n");
     });
@@ -55,7 +52,7 @@ discordClient.on("message", async (msg: Message) => {
   }
 
   // msg.guild is not null because we checked msg.member
-  const serverConfig: ServerConfig<any> | undefined = serverConfigs.get(
+  const serverConfig: ServerConfig<unknown> | undefined = serverConfigs.get(
     msg.guild.id
   );
   let userConfig: UserTtsConfig | undefined;
@@ -165,6 +162,7 @@ discordClient.on("message", async (msg: Message) => {
           } else {
             await msg.reply("you are not in a voice channel");
           }
+          break;
         case "im-lonely":
           if (msg.member.voice.channel !== null) {
             if (serverConfig !== undefined && serverConfig instanceof ServerTtsConfig) {
@@ -202,7 +200,7 @@ discordClient.on("message", async (msg: Message) => {
   }
 });
 
-discordClient.on("ready", () => {
+discordClient.on("ready", (): void => {
   console.log("logged in");
 });
 
