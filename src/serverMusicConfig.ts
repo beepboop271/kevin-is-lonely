@@ -2,8 +2,8 @@ import { VoiceConnection } from "discord.js";
 import { Readable as ReadableStream } from "stream";
 import ytdl from "ytdl-core";
 
-import { ArrayQueue } from "./Queue";
-import { ServerConfig } from "./ServerConfig";
+import { ArrayQueue } from "./queue";
+import { ServerConfig } from "./serverConfig";
 
 export class ServerMusicConfig extends ServerConfig<string> {
   public constructor(conn: VoiceConnection) {

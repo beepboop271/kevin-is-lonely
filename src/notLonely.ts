@@ -12,10 +12,10 @@ import {
 } from "discord.js";
 import { config as loadEnv } from "dotenv-safe";
 
-import { ServerConfig } from "./ServerConfig";
-import { ServerMusicConfig } from "./ServerMusicConfig";
-import { ServerTtsConfig } from "./ServerTtsConfig";
-import { UserTtsConfig } from "./UserTtsConfig";
+import { ServerConfig } from "./serverConfig";
+import { ServerMusicConfig } from "./serverMusicConfig";
+import { ServerTtsConfig } from "./serverTtsConfig";
+import { UserTtsConfig } from "./userTtsConfig";
 
 loadEnv();
 

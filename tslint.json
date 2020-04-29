@@ -3,19 +3,21 @@
   "extends": ["tslint:all"],
   "jsRules": {},
   "rules": {
+    // can turn on just for double-checking
+    "comment-format": false,
     "completed-docs": false,
     "cyclomatic-complexity": false,
     "no-console": false,
     "no-magic-numbers": false,
     "no-non-null-assertion": false, // typescript is not always able to know, which is the whole point of the assertion operator
     "no-unbound-method": false,
+    "prefer-function-over-method": false,
 
-    "comment-format": false,
+    // always active
     "max-classes-per-file": false,
     "member-ordering": [true, { "order": "fields-first" }],
     "newline-per-chained-call": false,
     "no-bitwise": false,
-    "prefer-function-over-method": false,
     "trailing-comma": [
       true,
       {
@@ -29,7 +31,7 @@
       }
     ],
     "typedef": [
-      true, // to be used with noImplicitAny or strict
+      true, // noImplicitAny or strict covers the rest
       "call-signature",
       "arrow-call-signature"
     ],

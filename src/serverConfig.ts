@@ -1,7 +1,7 @@
 import { StreamDispatcher, VoiceConnection } from "discord.js";
 import { Readable as ReadableStream } from "stream";
 
-import { IQueue } from "./Queue";
+import { IQueue } from "./queue";
 
 export abstract class ServerConfig<T> {
   private readonly _conn: VoiceConnection;

@@ -3,9 +3,9 @@ import { TextToSpeechClient } from "@google-cloud/text-to-speech/build/src/v1";
 import { VoiceConnection } from "discord.js";
 import { PassThrough as PassThroughStream } from "stream";
 
-import { CircularQueue } from "./Queue";
-import { ServerConfig } from "./ServerConfig";
-import { UserTtsConfig } from "./UserTtsConfig";
+import { CircularQueue } from "./queue";
+import { ServerConfig } from "./serverConfig";
+import { UserTtsConfig } from "./userTtsConfig";
 
 interface ITtsRequest {
   text: string;
