@@ -1,6 +1,7 @@
-export interface IQueue<T> {
+export interface IQueue<T> extends Iterable<T> {
   enqueue(data: T): void;
   dequeue(): T | undefined;
+  peek(): T | undefined;
   available(): boolean;
 }
 
@@ -19,8 +20,16 @@ export class ArrayQueue<T> implements IQueue<T> {
     return this._data.shift();
   }
 
+  public peek(): T | undefined {
+    return this._data[0];
+  }
+
   public available(): boolean {
     return this._data.length > 0;
+  }
+
+  public [Symbol.iterator](): Iterator<T> {
+    return this._data.values();
   }
 }
 
@@ -58,7 +67,25 @@ export class CircularQueue<T> implements IQueue<T> {
     return element;
   }
 
+  public peek(): T | undefined {
+    return this._queue[this._readIdx];
+  }
+
   public available(): boolean {
     return (this._queue[this._readIdx] !== undefined);
+  }
+
+  public [Symbol.iterator](): Iterator<T> {
+    const copy: T[] = [];
+    let i = this._readIdx;
+    do {
+      if (this._queue[i] === undefined) {
+        break;
+      }
+      copy.push(this._queue[i++]!);
+      i %= this.size;
+    } while (i !== this._readIdx);
+
+    return copy.values();
   }
 }

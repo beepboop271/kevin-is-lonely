@@ -19,7 +19,7 @@
     "@types/dotenv-safe": "^8.1.0"
   },
   "scripts": {
-    "start": "tsc -p . && node dist/not-lonely.js",
+    "start": "tsc -p . && node dist/notLonely.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

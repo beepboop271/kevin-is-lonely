@@ -14,6 +14,7 @@
     "prefer-function-over-method": false,
 
     // always active
+    "increment-decrement": false,
     "max-classes-per-file": false,
     "member-ordering": [true, { "order": "fields-first" }],
     "newline-per-chained-call": false,
