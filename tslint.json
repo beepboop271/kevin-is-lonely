@@ -13,12 +13,16 @@
     "no-unbound-method": false,
     "prefer-function-over-method": false,
 
+    // warning
+    "deprecation": {"severity": "warning"},
+
     // always active
     "increment-decrement": false,
     "max-classes-per-file": false,
     "member-ordering": [true, { "order": "fields-first" }],
     "newline-per-chained-call": false,
     "no-bitwise": false,
+    "object-literal-sort-keys": [true, "match-declaration-order"],
     "trailing-comma": [
       true,
       {

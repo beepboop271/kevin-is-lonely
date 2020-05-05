@@ -45,9 +45,9 @@ export class ServerMusicConfig extends ServerConfig<string> {
             }
             break;
           case "queue":
-            let s = `Now playing: ${this._nowPlaying}\nNext up: ${this._nextUp}\nQueue:\n`;
+            let s = `Now playing: <${this._nowPlaying}>\nNext up: <${this._nextUp}>\nQueue:\n`;
             for (const url of this.queue) {
-              s += `${url}\n`;
+              s += `<${url}>\n`;
             }
             await msg.channel.send(s);
             break;
