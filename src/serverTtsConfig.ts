@@ -130,18 +130,20 @@ export class ServerTtsConfig extends ServerConfig<ITtsRequest> {
     return new Promise<PassThroughStream>(async (resolve, reject): Promise<void> => {
       try {
         const [response] = await this._ttsClient.synthesizeSpeech({
-          // wtf google cloud (declares enum type on audioEncoding
-          // but guides show passing string)
+          input: { text: data.text },
+          voice: { languageCode: data.config.lang, name: data.config.voice },
           audioConfig: {
-            audioEncoding: 2, // mp3
+            audioEncoding: "MP3",
             pitch: data.config.pitch,
             speakingRate: data.config.speed,
           },
-          input: { text: data.text },
-          voice: { languageCode: data.config.lang, name: data.config.voice },
         });
 
-        if (response.audioContent !== null && response.audioContent !== undefined) {
+        if (
+          response.audioContent !== null
+          && response.audioContent !== undefined
+          && response.audioContent instanceof Uint8Array
+        ) {
           // create a stream for discord voice and convert
           // gcloud response (ArrayBuffer) -convert-> Buffer -write-to-> stream
           const audioStream: PassThroughStream = new PassThroughStream({
@@ -150,7 +152,7 @@ export class ServerTtsConfig extends ServerConfig<ITtsRequest> {
           audioStream.end(Buffer.from(response.audioContent.buffer));
           resolve(audioStream);
         } else {
-          reject(new Error("audioContent is undefined"));
+          reject(new Error("error with speech synthesis response"));
         }
       } catch (err) {
         // gcloud tts might fail if someone sets voice/lang

@@ -4,15 +4,15 @@
   "description": "aaaaaaaaaaaaaaaaaaaa",
   "main": "not-lonely.js",
   "dependencies": {
-    "@google-cloud/text-to-speech": "^2.1.2",
+    "@discordjs/opus": "^0.3.2",
+    "@google-cloud/text-to-speech": "^2.3.0",
     "bufferutil": "^4.0.1",
-    "discord.js": "github:discordjs/discord.js",
+    "discord.js": "^12.2.0",
     "dotenv-safe": "^8.2.0",
-    "erlpack": "github:discordapp/erlpack",
+    "erlpack": "github:discord/erlpack",
     "libsodium-wrappers": "^0.7.6",
-    "node-opus": "^0.3.3",
     "utf-8-validate": "^5.0.2",
-    "ytdl-core": "^2.1.0",
+    "ytdl-core": "^2.1.1",
     "zlib-sync": "^0.1.6"
   },
   "devDependencies": {

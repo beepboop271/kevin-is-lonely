@@ -83,8 +83,8 @@ export abstract class ServerConfig<T> {
     if (this.isPlaying()) {
       throw new Error("tried to play stream while already playing");
     }
-    this._dispatcher = this._conn.play(content);
-    this._dispatcher.on("end", (): void => {
+    this._dispatcher = this._conn.play(content, { volume: false });
+    this._dispatcher.on("finish", (): void => {
       if (this._dispatcher === undefined) {
         // the literal only place dispatcher can become undefined
         // is inside this very function but whatever tslint
