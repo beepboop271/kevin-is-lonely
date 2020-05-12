@@ -1,4 +1,5 @@
 import { Message, StreamDispatcher, VoiceConnection } from "discord.js";
+import NestedError from "nested-error-stacks";
 import { Readable as ReadableStream } from "stream";
 
 import { IQueue } from "./queue";
@@ -12,12 +13,13 @@ export abstract class ServerConfig<T> {
 
   private _dispatcher: StreamDispatcher | undefined;
   private _nextStream: Promise<ReadableStream> | undefined;
+  private _isLoadingStream: boolean;
 
   public constructor(
     voiceChannelId: string,
     textChannelId: string,
     conn: VoiceConnection,
-    queue: IQueue<T>
+    queue: IQueue<T>,
   ) {
     this.voiceChannel = voiceChannelId;
     this.textChannel = textChannelId;
@@ -26,6 +28,8 @@ export abstract class ServerConfig<T> {
     this._dispatcher = undefined;
     this._queue = queue;
     this._nextStream = undefined;
+
+    this._isLoadingStream = false;
   }
 
   protected get conn(): VoiceConnection {
@@ -39,8 +43,25 @@ export abstract class ServerConfig<T> {
   public abstract async handleMessage(msg: Message): Promise<boolean>;
 
   public async enqueue(content: T): Promise<void> {
-    if (!this.isPlaying()) {
-      this.playStream(await this.fetchStream(content));
+    if (
+      !this.isPlaying()
+      && this._nextStream === undefined
+      && !this._queue.available()
+    ) {
+      // to prevent two messages from being loaded and then both
+      // attempting to playStream (thus causing error), set a flag
+      this._isLoadingStream = true;
+      try {
+        const stream = await this.fetchStream(content);
+        this._isLoadingStream = false;
+        this.playStream(stream);
+      } catch (e) {
+        this._isLoadingStream = false;
+        if (e instanceof Error) {
+          throw new NestedError("Failed to load stream to play", e);
+        }
+        throw new Error(`Failed to load stream to play: ${e}`);
+      }
     } else {
       if (this._nextStream === undefined) {
         this._nextStream = this.fetchStream(content);
@@ -52,8 +73,8 @@ export abstract class ServerConfig<T> {
 
   protected abstract async fetchStream(data: T): Promise<ReadableStream>;
 
+  // tslint:disable-next-line:no-empty
   protected onEnd(): void {
-    ;
   }
 
   protected die(): void {
@@ -68,9 +89,16 @@ export abstract class ServerConfig<T> {
     }
     const value: Promise<ReadableStream> = this._nextStream!;
 
-    this._nextStream = this._queue.available()
-      ? this.fetchStream(this._queue.dequeue()!)
-      : undefined;
+    try {
+      this._nextStream = this._queue.available()
+        ? this.fetchStream(this._queue.dequeue()!)
+        : undefined;
+    } catch (e) {
+      if (e instanceof Error) {
+        throw new NestedError("Failed to load an upcoming stream", e);
+      }
+      throw new Error(`Failed to load an upcoming stream: ${e}`);
+    }
 
     return value;
   }
@@ -100,7 +128,12 @@ export abstract class ServerConfig<T> {
             this._dispatcher = undefined;
             this.playStream(stream!);
           })
-          .catch(console.error);
+          .catch((e): void => {
+            if (e instanceof Error) {
+              throw new NestedError("Failed to get the next stream to play", e);
+            }
+            throw new Error(`Failed to get the next stream to play: ${e}`);
+          });
       } else {
         this._dispatcher = undefined;
       }
@@ -108,6 +141,6 @@ export abstract class ServerConfig<T> {
   }
 
   private isPlaying(): boolean {
-    return this._dispatcher !== undefined;
+    return this._isLoadingStream || this._dispatcher !== undefined;
   }
 }

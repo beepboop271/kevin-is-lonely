@@ -3,6 +3,7 @@ import { TextToSpeechClient as GCloudTTSClient } from "@google-cloud/text-to-spe
 // type definition :/
 // tslint:disable-next-line:no-submodule-imports
 import { TextToSpeechClient } from "@google-cloud/text-to-speech/build/src/v1";
+import chalk from "chalk";
 import {
   Client as DiscordClient,
   Message,
@@ -25,20 +26,45 @@ const ttsClient: TextToSpeechClient = new GCloudTTSClient();
 // for storing many ongoing tts sessions
 const serverConfigs = new Map<string, ServerConfig<unknown>>();
 
+// tslint:disable:no-any no-unsafe-any
+const error = (x: any): void => {
+  process.stdout.write("\u274C ");
+  if (x.stack !== undefined) {
+    console.error(chalk.red(x.stack));
+  } else {
+    console.error(chalk.red(x));
+  }
+};
+const warn = (x: any): void => {
+  process.stdout.write("\u26A0 ");
+  if (x.stack !== undefined) {
+    console.error(chalk.yellow(x.stack));
+  } else {
+    console.error(chalk.yellow(x));
+  }
+};
+const log = (x: any): void => {
+  process.stdout.write("\u2139 ");
+  if (x.stack !== undefined) {
+    console.log(chalk.grey(x.stack));
+  } else {
+    console.log(chalk.grey(x));
+  }
+};
+// tslint:enable
+
 const logMessage = (msg: Message): void => {
   if (msg.member === null || msg.guild === null) {
-    console.log(`DM: ${msg.author.username}:\n${msg.content}\n`);
+    log(chalk`{red DM:} {grey ${msg.createdAt.toLocaleString()}:} {blueBright ${msg.author.username}:}\n{white ${msg.content}}\n`);
   } else {
-    console.log(
-      `${msg.guild.name}: #${(msg.channel as TextChannel).name}: ${msg.author.username} (${msg.member.nickname})\n${msg.content}`
-    );
+    log(chalk`{grey ${msg.createdAt.toLocaleString()}:} {greenBright ${msg.guild.name}: #${(msg.channel as TextChannel).name}:} {blueBright ${msg.author.username} (${msg.member.nickname})}`);
     if (msg.attachments.size > 0) {
+      log("attachments:");
       msg.attachments.forEach((attachment: MessageAttachment): void => {
-        console.log(`${attachment.proxyURL}\n`);
+        log(`${attachment.proxyURL}`);
       });
-    } else {
-      console.log("");
     }
+    log(`${chalk.white(msg.content)}\n`);
   }
 };
 
@@ -60,8 +86,13 @@ discordClient.on("message", async (msg: Message): Promise<void> => {
     serverConfig !== undefined
     && msg.channel.id === serverConfig.textChannel
   ) {
-    if (await serverConfig.handleMessage(msg)) {
-      serverConfigs.delete(msg.guild.id);
+    try {
+      if (await serverConfig.handleMessage(msg)) {
+        serverConfigs.delete(msg.guild.id);
+      }
+    } catch (e) {
+      msg.channel.send(`failed to send: ${e}`).catch((e): void => { error(e); });
+      error(e);
     }
     if (serverConfig instanceof ServerTtsConfig) {
       userConfig = serverConfig.getUserConfig(msg.author.id);
@@ -108,13 +139,13 @@ discordClient.on("message", async (msg: Message): Promise<void> => {
                 msg.member.voice.channel.id,
                 msg.channel.id,
                 await msg.member.voice.channel.join(),
-                ttsClient
+                ttsClient,
               ).addUser(msg.author.id);
             } else {
               newServerConfig = new ServerMusicConfig(
                 msg.member.voice.channel.id,
                 msg.channel.id,
-                await msg.member.voice.channel.join()
+                await msg.member.voice.channel.join(),
               );
             }
             serverConfigs.set(msg.guild.id, newServerConfig);
@@ -125,13 +156,13 @@ discordClient.on("message", async (msg: Message): Promise<void> => {
     } catch (err) {
       // random errors in sending messages or editing
       // or whatever, nothing we can do but catch and log
-      console.error(err);
+      warn(err);
     }
   }
 });
 
 discordClient.on("ready", (): void => {
-  console.log("logged in");
+  log(chalk.blueBright("logged in"));
 });
 
-discordClient.login(process.env.DISCORD_BOT_TOKEN).catch(console.error);
+discordClient.login(process.env.DISCORD_BOT_TOKEN).catch(error);

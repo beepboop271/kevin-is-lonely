@@ -1,4 +1,5 @@
 import { Message, VoiceConnection } from "discord.js";
+import NestedError from "nested-error-stacks";
 import { Readable as ReadableStream } from "stream";
 import ytdl from "ytdl-core";
 
@@ -12,13 +13,13 @@ export class ServerMusicConfig extends ServerConfig<string> {
   public constructor(
     voiceChannelId: string,
     textChannelId: string,
-    conn: VoiceConnection
+    conn: VoiceConnection,
   ) {
     super(
       voiceChannelId,
       textChannelId,
       conn,
-      new ArrayQueue<string>()
+      new ArrayQueue<string>(),
     );
   }
 
@@ -39,9 +40,7 @@ export class ServerMusicConfig extends ServerConfig<string> {
               await this.enqueue(args[1]);
               await msg.reply("added");
             } else {
-              await msg.reply(
-                "expected a youtube link"
-              );
+              await msg.reply("expected a youtube link");
             }
             break;
           case "queue":
@@ -53,8 +52,11 @@ export class ServerMusicConfig extends ServerConfig<string> {
             break;
           default:
         }
-      } catch (err) {
-        console.error(err);
+      } catch (e) {
+        if (e instanceof Error) {
+          throw new NestedError("I'm lazy and put a try/catch around a large section", e);
+        }
+        throw new Error(`I'm lazy and put a try/catch around a large section: ${e}`);
       }
     }
 
