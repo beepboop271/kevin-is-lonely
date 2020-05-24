@@ -28,7 +28,7 @@ const serverConfigs = new Map<string, ServerConfig<unknown>>();
 
 // tslint:disable:no-any no-unsafe-any
 const error = (x: any): void => {
-  process.stdout.write("\u274C ");
+  process.stdout.write("\u274C\uFE0F ");
   if (x.stack !== undefined) {
     console.error(chalk.red(x.stack));
   } else {
@@ -36,7 +36,7 @@ const error = (x: any): void => {
   }
 };
 const warn = (x: any): void => {
-  process.stdout.write("\u26A0 ");
+  process.stdout.write("\u26A0\uFE0F ");
   if (x.stack !== undefined) {
     console.error(chalk.yellow(x.stack));
   } else {
@@ -44,7 +44,7 @@ const warn = (x: any): void => {
   }
 };
 const log = (x: any): void => {
-  process.stdout.write("\u2139 ");
+  process.stdout.write("\u2139\uFE0F ");
   if (x.stack !== undefined) {
     console.log(chalk.grey(x.stack));
   } else {
@@ -73,10 +73,6 @@ discordClient.on("message", async (msg: Message): Promise<void> => {
   if (msg.member === null || msg.guild === null) {
     // only respond to non dm (server) messages
     // msg.guild check is redundant but helps ts know it's null too
-    return;
-  }
-
-  if (msg.author.id === process.env.LOL) {
     return;
   }
 
