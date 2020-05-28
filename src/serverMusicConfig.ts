@@ -23,9 +23,8 @@ export class ServerMusicConfig extends ServerConfig<string> {
     );
   }
 
-  public async handleMessage(msg: Message): Promise<boolean> {
-    if (msg.content.substring(0, 1) === "*") {
-      const args: readonly string[] = msg.content.substring(1).split(" ");
+  public async handleMessage(msg: Message, args: readonly string[]): Promise<boolean> {
+    if (msg.content.charAt(0) === "*") {
       try {
         switch (args[0]) {
           case "help":
@@ -49,8 +48,6 @@ export class ServerMusicConfig extends ServerConfig<string> {
               s += `<${url}>\n`;
             }
             await msg.channel.send(s);
-            break;
-          default:
         }
       } catch (e) {
         if (e instanceof Error) {

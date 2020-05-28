@@ -1,9 +1,8 @@
-// tslint:disable-next-line:no-submodule-imports // google dumb and puts the type in a random dir
-import { TextToSpeechClient } from "@google-cloud/text-to-speech/build/src/v1";
 import { Message, VoiceConnection } from "discord.js";
 import NestedError from "nested-error-stacks";
 import { PassThrough as PassThroughStream } from "stream";
 
+import { embeds, ttsClient } from "./bot";
 import { CircularQueue } from "./queue";
 import { ServerConfig } from "./serverConfig";
 import { UserTtsConfig } from "./userTtsConfig";
@@ -16,14 +15,12 @@ interface ITtsRequest {
 export class ServerTtsConfig extends ServerConfig<ITtsRequest> {
   private static readonly QUEUE_LENGTH = 10;
 
-  private readonly _ttsClient: TextToSpeechClient;
   private readonly _users: Map<string, UserTtsConfig>;
 
   public constructor(
     voiceChannelId: string,
     textChannelId: string,
     conn: VoiceConnection,
-    tts: TextToSpeechClient,
   ) {
     super(
       voiceChannelId,
@@ -33,21 +30,19 @@ export class ServerTtsConfig extends ServerConfig<ITtsRequest> {
     );
 
     this._users = new Map<string, UserTtsConfig>();
-    this._ttsClient = tts;
   }
 
-  public async handleMessage(msg: Message): Promise<boolean> {
+  public async handleMessage(msg: Message, args: readonly string[]): Promise<boolean> {
     const userConfig: UserTtsConfig | undefined = this._users.get(msg.author.id);
     if (userConfig === undefined) {
       return false;
     }
     // if in speaking mode
-    if (msg.content.substring(0, 1) === "*") {
-      const args: readonly string[] = msg.content.substring(1).split(" ");
+    if (msg.content.charAt(0) === "*") {
       try {
         switch (args[0]) {
           case "help":
-            await msg.reply("`*leave` to be lonely again, `*set-voice voice [lang]` to change voice (`*set-voice B en-us`)");
+            await msg.channel.send(embeds.voiceHelp);
             break;
           case "leave":
             return this.deleteUser(msg.author.id);
@@ -69,13 +64,11 @@ export class ServerTtsConfig extends ServerConfig<ITtsRequest> {
             break;
           case "set-speed":
             if (!userConfig.setSpeed(Number(args[1]))) {
-              await msg.reply("invalid speed (expeceted a number 0.25 to 4)");
+              await msg.reply("invalid speed (expected a number 0.25 to 4)");
             }
             break;
           case "reset-voice":
             userConfig.reset();
-            break;
-          default:
         }
       } catch (e) {
         if (e instanceof Error) {
@@ -125,7 +118,7 @@ export class ServerTtsConfig extends ServerConfig<ITtsRequest> {
     // gets the mp3 audio of the requested text
     // using the configuration's language and voice
     try {
-      const [response] = await this._ttsClient.synthesizeSpeech({
+      const [response] = await ttsClient.synthesizeSpeech({
         input: { text: data.text },
         voice: { languageCode: data.config.lang, name: data.config.voice },
         audioConfig: {
@@ -155,6 +148,9 @@ export class ServerTtsConfig extends ServerConfig<ITtsRequest> {
       // wrong or smth dumb like that lol
       data.config.reset();
       // console.warn("reset voice to default");
+      if (e instanceof Error) {
+        throw new NestedError("Failed to synthesize speech", e);
+      }
       throw e;
     }
   }

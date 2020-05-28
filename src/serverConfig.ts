@@ -40,7 +40,10 @@ export abstract class ServerConfig<T> {
     return this._queue;
   }
 
-  public abstract async handleMessage(msg: Message): Promise<boolean>;
+  public abstract async handleMessage(
+    msg: Message,
+    args: readonly string[],
+  ): Promise<boolean>;
 
   public async enqueue(content: T): Promise<void> {
     if (

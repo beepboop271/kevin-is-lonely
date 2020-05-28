@@ -23,6 +23,7 @@
     "newline-per-chained-call": false,
     "no-bitwise": false,
     "object-literal-sort-keys": [true, "match-declaration-order"],
+    "switch-default": false,
     "trailing-comma": [
       true,
       {

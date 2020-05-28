@@ -2,7 +2,8 @@
   "name": "kevin-is-lonely",
   "version": "1.0.0",
   "description": "aaaaaaaaaaaaaaaaaaaa",
-  "main": "not-lonely.js",
+  "type": "module",
+  "main": "dist/notLonely.js",
   "dependencies": {
     "@discordjs/opus": "^0.3.2",
     "@google-cloud/text-to-speech": "^2.3.0",
@@ -14,15 +15,18 @@
     "libsodium-wrappers": "^0.7.6",
     "nested-error-stacks": "^2.1.0",
     "utf-8-validate": "^5.0.2",
-    "ytdl-core": "^2.1.1",
+    "ytdl-core": "^2.1.5",
     "zlib-sync": "^0.1.6"
   },
   "devDependencies": {
     "@types/dotenv-safe": "^8.1.0",
-    "@types/nested-error-stacks": "^2.1.0"
+    "@types/nested-error-stacks": "^2.1.0",
+    "tslint": "^6.1.2",
+    "typescript": "^3.9.3",
+    "typescript-tslint-plugin": "^0.5.5"
   },
   "scripts": {
-    "start": "tsc -p . && node dist/notLonely.js",
+    "start": "npx tsc && node --experimental-top-level-await --es-module-specifier-resolution=node -r dotenv-safe/config dist/notLonely.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
