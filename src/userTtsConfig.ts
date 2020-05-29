@@ -1,3 +1,5 @@
+import { voiceOptions } from "./bot";
+
 const clamp = (value: number, min: number, max: number): number =>
   Math.max(Math.min(value, max), min);
 
@@ -8,7 +10,6 @@ export class UserTtsConfig {
 
   private _voice!: string;
   private _lang!: string;
-  private _voiceOption!: string;
   private _pitch!: number;
   private _speed!: number;
 
@@ -34,54 +35,47 @@ export class UserTtsConfig {
 
   public reset(): void {
     this._lang = "en-US";
-    this._voiceOption = "B";
     this._voice = "en-US-Wavenet-B";
     this._pitch = 0;
     this._speed = 1;
   }
 
-  public setLang(lang: string): boolean {
-    const match: RegExpMatchArray | null = lang
-      .toLowerCase()
-      .match(/(?<lang>[a-z]{2}|cmn)-(?<country>[a-z]{2})/);
-    if (match === null || match.groups === undefined) {
-      return false;
+  public setVoice(voiceVariant: string | undefined, lang: string | undefined): void {
+    if (voiceVariant !== undefined) {
+      let possibleLang = this._lang;
+      const possibleVoiceVariant = voiceVariant.toUpperCase();
+
+      if (lang !== undefined) {
+        if (!voiceOptions.languageVariants.has(lang)) {
+          throw new Error("Expected a language code supported, like `en-us` (`*set-voice a en-us`) (see `*list` or `*list current`)");
+        }
+
+        const parts = lang.split("-");
+        possibleLang = `${parts[0]}-${parts[1].toUpperCase()}`;
+      }
+
+      const possibleVoice = `${possibleLang}-Wavenet-${possibleVoiceVariant}`;
+      if (!voiceOptions.voiceVariants.has(possibleVoice)) {
+        throw new Error("Expected a single letter supported by the language specified, like `a` (`*set-voice a` or `*set-voice a en-us`) (see `*list` or `*list current`)");
+      }
+      this._lang = possibleLang;
+      this._voice = possibleVoice;
+    } else {
+      throw new Error("Expected a single letter supported by the language specified, like `a` (`*set-voice a` or `*set-voice a en-us`) (see `*list` or `*list current`)");
     }
-
-    this._lang = `${match.groups.lang}-${match.groups.country.toUpperCase()}`;
-    this._voice = `${this._lang}-Wavenet-${this._voiceOption}`;
-
-    return true;
   }
 
-  public setVoiceOption(voiceOption: string): boolean {
-    if (voiceOption.match(/^[a-f]$/i) === null) {
-      return false;
-    }
-
-    this._voiceOption = voiceOption.toUpperCase();
-    this._voice = `${this._lang}-Wavenet-${this._voiceOption}`;
-
-    return true;
-  }
-
-  public setPitch(pitch: number): boolean {
+  public setPitch(pitch: number): void {
     if (Number.isNaN(pitch)) {
-      return false;
+      throw new Error("Expected a number between -20 and 20 for pitch adjustment");
     }
-
     this._pitch = clamp(pitch, -UserTtsConfig.MAX_PITCH, UserTtsConfig.MAX_PITCH);
-
-    return true;
   }
 
-  public setSpeed(speed: number): boolean {
+  public setSpeed(speed: number): void {
     if (Number.isNaN(speed)) {
-      return false;
+      throw new Error("Expected a number between 0.25 and 4 for speed adjustment");
     }
-
     this._speed = clamp(speed, UserTtsConfig.MIN_SPEED, UserTtsConfig.MAX_SPEED);
-
-    return true;
   }
 }

@@ -26,7 +26,7 @@
     "typescript-tslint-plugin": "^0.5.5"
   },
   "scripts": {
-    "start": "npx tsc && node --experimental-top-level-await --es-module-specifier-resolution=node -r dotenv-safe/config dist/notLonely.js",
+    "start": "npx tsc && echo Compilation complete && node --experimental-top-level-await --es-module-specifier-resolution=node -r dotenv-safe/config dist/notLonely.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

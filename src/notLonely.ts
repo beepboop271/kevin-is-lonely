@@ -14,7 +14,6 @@ import { ServerTtsConfig } from "./serverTtsConfig";
 import { UserTtsConfig } from "./userTtsConfig";
 
 // tslint:disable:no-any no-unsafe-any
-// const stringify = (x: any): string => JSON.stringify(x, undefined, 2);
 const error = (x: any): void => {
   process.stdout.write("\u274C\uFE0F ");
   if (x.stack !== undefined) {
@@ -69,7 +68,10 @@ discordClient.on("message", async (msg: Message): Promise<void> => {
     return;
   }
 
-  const args: readonly string[] = msg.content.substring(1).split(" ");
+  const args: readonly string[] = msg.content
+    .substring(1)
+    .split(" ")
+    .map((s): string => s.toLowerCase());
   if (msg.content.charAt(0) === "*") {
     try {
       switch (args[0]) {
@@ -85,28 +87,31 @@ discordClient.on("message", async (msg: Message): Promise<void> => {
 
           return;
         case "list":
-          if (args.length > 1) {
-            const voices = embeds.voiceList.get(args[1]);
-            if (voices === undefined) {
-              await msg.reply("Found no such language");
+          if (args[1] !== "current") {
+            if (args.length > 1) {
+              const voices = embeds.voiceList.get(args[1]);
+              if (voices === undefined) {
+                await msg.reply("Found no such language");
+              } else {
+                await msg.channel.send(voices);
+              }
             } else {
-              await msg.channel.send(voices);
+              await msg.channel.send(embeds.languageList);
             }
-          } else {
-            await msg.channel.send(embeds.languageList);
-          }
 
-          return;
+            return;
+          }
+          break;
         case "help":
           // if the user just said "*help" (non-absolute), figure which
           // help to send later.
           if (args.length > 1) {
-            if (args[1].toLowerCase() === "general") {
+            if (args[1] === "general") {
               await msg.channel.send(embeds.generalHelp);
 
               return;
             }
-            if (args[1].toLowerCase() === "tts") {
+            if (args[1] === "tts") {
               await msg.channel.send(embeds.voiceHelp);
 
               return;
@@ -189,7 +194,9 @@ discordClient.on("message", async (msg: Message): Promise<void> => {
 });
 
 discordClient.on("ready", (): void => {
+  console.timeEnd("Logging in");
   log(chalk.blueBright("logged in"));
 });
 
+console.time("Logging in");
 discordClient.login(process.env.DISCORD_BOT_TOKEN).catch(error);

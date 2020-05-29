@@ -44,27 +44,44 @@ export class ServerTtsConfig extends ServerConfig<ITtsRequest> {
           case "help":
             await msg.channel.send(embeds.voiceHelp);
             break;
+          case "list":
+            if (args[1] === "current") {
+              await msg.channel.send(embeds.voiceList.get(userConfig.lang.split("-")[0]));
+            }
+            break;
           case "leave":
             return this.deleteUser(msg.author.id);
           case "set-voice":
-            // not the best error checking but better than nothing
-            if (args.length > 2) {
-              if (!userConfig.setLang(args[2])) {
-                await msg.reply("invalid lang (expected something like en-US)");
+            try {
+              userConfig.setVoice(args[1], args[2]);
+            } catch (e) {
+              if (e instanceof Error) {
+                await msg.reply(e.message);
+              } else {
+                await msg.reply(e);
               }
-            }
-            if (!userConfig.setVoiceOption(args[1])) {
-              await msg.reply("invalid voice (expected one character a to f)");
             }
             break;
           case "set-pitch":
-            if (!userConfig.setPitch(Number(args[1]))) {
-              await msg.reply("invalid pitch (expected a number -20.0 to 20.0)");
+            try {
+              userConfig.setPitch(Number(args[1]));
+            } catch (e) {
+              if (e instanceof Error) {
+                await msg.reply(e.message);
+              } else {
+                await msg.reply(e);
+              }
             }
             break;
           case "set-speed":
-            if (!userConfig.setSpeed(Number(args[1]))) {
-              await msg.reply("invalid speed (expected a number 0.25 to 4)");
+            try {
+              userConfig.setSpeed(Number(args[1]));
+            } catch (e) {
+              if (e instanceof Error) {
+                await msg.reply(e.message);
+              } else {
+                await msg.reply(e);
+              }
             }
             break;
           case "reset-voice":
