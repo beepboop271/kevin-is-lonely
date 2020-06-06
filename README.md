@@ -1,32 +1,32 @@
 # kevin-is-lonely
 
-## i really don't know how to do node.js properly okay read the code with that in mind
+A Discord bot which allows people without a mic to "speak" in voice channels, using TTS.
 
-### update: i kinda know how to do node.js properly but still read the code with the above in mind :)
+Backstory: I don't really use a mic or like to talk so I just sit in voice channels and listen to my friends do whatever. Sometimes when I need to talk, I'll just type into a text channel. However, this only works when the other people in the voice channel can easily look at Discord, something not very practical when others are playing games for example. Then one day, we decided to create a channel #kevin-is-lonely because when I sent text messages to talk to people in a voice channel it would look like I'm talking to myself. Someone had the great idea of making a bot to read messages that I sent to #kevin-is-lonely so that i could "speak" in the voice channel, and here it is :p
 
-i don't really use a mic so i just sit in voice channels and listen to my friends do whatever. sometimes when i need to talk, i'll just type into a text channel. then one day, we decided to create a channel #kevin-is-lonely because when i sent messages to talk to people in a voice channel it would look like i'm talking to myself. someone had the great idea of making a bot to read messages that i sent to #kevin-is-lonely so that i could 'speak' in the voice channel, and here it is :p
+## Features:
+- Google Cloud TTS, using Wavenet voices for cool voices
+- Supports as many languages and accents as Google supports, including but not limited to English (US), English (GB), French, Japanese, Mandarin
+- The latency between the text message and speaking is quite minimal in my personal use case, which involves running the bot on my desktop and at most two different guilds using it at the same time, no clue if it would scale (I guess the performance is just up to how efficiently the voice stream can be sent, and how quickly Google responds to the request)
+- Multiple users supported in one voice channel, messages can be queued up (to a limit) and spoken, and each person using the bot can have a different voice to allow the people listening to differentiate
+- idk there might be more interesting things
 
-uses google cloud text to speech api for those epic wavenet voices. ~~node.js even though i don't really know how to do all that weird async-event-loop-listeners-basically-threading-but-not stuff, if you look at the code you can see the bot can only be speaking in one place because it was only made with my use case in mind. maybe have a list of those tts config things and check every message to see if it should be spoken to any of them or something?? that sounds like it would run really poorly with many connections.. well maybe you could binary search it but still i clearly don't know much about this web stuff.~~ ok idk how i didn't come up with a map like what?? anyways in theory it should work across multiple servers now but i haven't been able to test that. ~~also that bug with cutting off the end of the file is gonna slow it all down because i'm using ffmpeg to re-encode the file with silence at the end.~~ now using the master branch of discord.js as it fixes that bug.
+## Running:
+- You need Node 14.x for top level await support which is used when loading the bot
+- Create a Google Cloud project and enable the [Text to Speech API](https://console.cloud.google.com/apis/library/texttospeech.googleapis.com) or enable the API in an existing project
+- Go to the Credentials tab of the TTS API and create new credentials using a Service Account, create a key for the account, and download the `.json` file (or use existing credentials)
+- Create a [Discord application](https://discord.com/developers/applications) and go to the Bot tab to find the token, or get the token of an existing bot
+- Create a `.env` file with the required variables (found in `.env.example`): the Discord bot token, and the path to the `.json` file from before
+- Install the dependencies `npm i`
+- Then just use `npm run start`
+- Alternatively, if you have TypeScript installed globally, replace `npx tsc` with `tsc`
+- Invite your bot to the guilds you want to use it in
+- Disclaimer: Not 100% sure if these are good instructions, it's been a while since I did this
 
-## stuff i'd do if i felt like it
-
-- ~~use the dev versions of discord.js because apparently the bug is fixed~~ done- discord.js master branch now used
-- ~~find a way to play the data directly from gcloud~~ done- convert buffers to streams
-- ~~make it work with multiple connections~~ done- in theory- using map of channel->config
-
-~~note: may never do this~~ everything is done ayy
-
-### stuff that i didn't write down that i'd do but i ended up doing
-
-- voice, pitch, and speed adjustments
-- multiple users in the same server can be using the bot to speak  with different voices
-- new messages no longer cut off the message being currently spoken, they are queued in a circular buffer and messages are not spoken if too many pending messages are in the queue
-
-### new stuff i'd do if i felt like it
-
-- expand acronyms so it doesn't say i d k instead of i don't know
-- ???
-- annoy candice to *c o n t r i b u t e* to *open* **source** ***projects*** (like this one, if u can call it a project)
-- magic
-- fifth list item
-- not the fifth list item
+## Using:
+- TLDR: Use `*help`
+- Join a voice channel that you want the bot to speak in
+- Use `*im-lonely`, which will either summon the bot or add you as another user (note: the bot can only be in one voice channel of one guild at a time, like any other user)
+- All messages that you type which do not begin with `*` will be spoken with TTS
+- Using `*help` while using the bot or `*help tts` will tell you how to change your voice
+- Using `*list` can tell you what voices/languages are supported
