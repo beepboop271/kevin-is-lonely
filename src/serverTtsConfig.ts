@@ -49,6 +49,14 @@ export class ServerTtsConfig extends ServerConfig<ITtsRequest> {
               await msg.channel.send(embeds.voiceList.get(userConfig.lang.split("-")[0]));
             }
             break;
+          case "disconnect":
+            this.die();
+
+            return true;
+          case "fuckoff":
+            this.die();
+
+            return true;
           case "leave":
             return this.deleteUser(msg.author.id);
           case "set-voice":

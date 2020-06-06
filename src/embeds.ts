@@ -107,6 +107,10 @@ export const generateEmbeds = (voiceOptions: IVoiceOptions): IBotEmbeds => ({
         value: "Stops the bot from speaking the user's messages. If no other users are using TTS, also leaves the voice channel.",
       },
       {
+        name: "`*disconnect`",
+        value: "Immediately stops all TTS and disconnects from voice. Alternatively, use `*fuckoff`",
+      },
+      {
         name: "`*list current`",
         value: "Equivalent to `*list [language code]` with the language the user is currently using.",
       },
