@@ -2,9 +2,7 @@ import chalk from "chalk";
 import {
   Client as DiscordClient,
   Message,
-  MessageAttachment,
   SnowflakeUtil,
-  TextChannel,
 } from "discord.js";
 
 import { embeds } from "./bot";
@@ -30,14 +28,6 @@ const warn = (x: any): void => {
     console.error(chalk.yellow(x));
   }
 };
-const log = (x: any): void => {
-  process.stdout.write("\u2139\uFE0F ");
-  if (x.stack !== undefined) {
-    console.log(chalk.grey(x.stack));
-  } else {
-    console.log(chalk.grey(x));
-  }
-};
 // tslint:enable
 
 const discordClient: DiscordClient = new DiscordClient();
@@ -45,23 +35,7 @@ const discordClient: DiscordClient = new DiscordClient();
 // for storing many ongoing tts sessions
 const serverConfigs = new Map<string, ServerConfig<unknown>>();
 
-const logMessage = (msg: Message): void => {
-  if (msg.member === null || msg.guild === null) {
-    log(chalk`{red DM:} {grey ${msg.createdAt.toLocaleString()}:} {blueBright ${msg.author.username}:}\n{white ${msg.content}}\n`);
-  } else {
-    log(chalk`{grey ${msg.createdAt.toLocaleString()}:} {greenBright ${msg.guild.name}: #${(msg.channel as TextChannel).name}:} {blueBright ${msg.author.username} (${msg.member.nickname})}`);
-    if (msg.attachments.size > 0) {
-      log("attachments:");
-      msg.attachments.forEach((attachment: MessageAttachment): void => {
-        log(`${attachment.proxyURL}`);
-      });
-    }
-    log(`${chalk.white(msg.content)}\n`);
-  }
-};
-
 discordClient.on("message", async (msg: Message): Promise<void> => {
-  logMessage(msg);
   if (msg.member === null || msg.guild === null) {
     // only respond to non dm (server) messages
     // msg.guild check is redundant but helps ts know it's null too
@@ -132,6 +106,9 @@ discordClient.on("message", async (msg: Message): Promise<void> => {
     try {
       if (await serverConfig.handleMessage(msg, args)) {
         serverConfigs.delete(msg.guild.id);
+        console.log(JSON.stringify(serverConfigs));
+
+        return;
       }
     } catch (e) {
       msg.channel.send(`failed to send: ${e}`).catch((e): void => { error(e); });
@@ -159,11 +136,12 @@ discordClient.on("message", async (msg: Message): Promise<void> => {
             if (
               serverConfig instanceof ServerTtsConfig
               && serverConfig.voiceChannel === msg.member.voice.channel.id
+              && serverConfig.textChannel === msg.channel.id
             ) {
               serverConfig.addUser(msg.author.id);
               await msg.channel.send("added user");
             } else {
-              await msg.channel.send("bot in use already");
+              await msg.channel.send("bot in use already in another text/voice channel");
             }
           } else {
             let newServerConfig: ServerConfig<unknown>;
@@ -195,7 +173,7 @@ discordClient.on("message", async (msg: Message): Promise<void> => {
 
 discordClient.on("ready", (): void => {
   console.timeEnd("Logging in");
-  log(chalk.blueBright("logged in"));
+  console.log(chalk.blueBright("logged in"));
 });
 
 console.time("Logging in");

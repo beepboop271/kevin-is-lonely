@@ -143,6 +143,7 @@ export class ServerTtsConfig extends ServerConfig<ITtsRequest> {
     // gets the mp3 audio of the requested text
     // using the configuration's language and voice
     try {
+      console.log(`retrieving tts for ${JSON.stringify(data)}`);
       const [response] = await ttsClient.synthesizeSpeech({
         input: { text: data.text },
         voice: { languageCode: data.config.lang, name: data.config.voice },
@@ -164,6 +165,8 @@ export class ServerTtsConfig extends ServerConfig<ITtsRequest> {
           highWaterMark: 65536,
         });
         audioStream.end(Buffer.from(response.audioContent.buffer));
+
+        console.log(`successfully generated stream for ${JSON.stringify(data)}`);
 
         return audioStream;
       }

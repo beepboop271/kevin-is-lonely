@@ -1,9 +1,6 @@
 // tslint:disable-next-line:no-submodule-imports
 import { TextToSpeechClient } from "@google-cloud/text-to-speech/build/src/v1";
 
-// tslint:disable-next-line:no-any
-const stringify = (x: any): string => JSON.stringify(x, undefined, 2);
-
 export interface IVoice {
   name: string;
   gender: "SSML_VOICE_GENDER_UNSPECIFIED" | "MALE" | "FEMALE" | "NEUTRAL";
@@ -35,7 +32,7 @@ export const getVoices = async (
   let languageCode: string;
   let maybeVoiceList: IVoice[] | undefined;
   if (ttsVoiceList.voices === undefined || ttsVoiceList.voices === null) {
-    throw new Error(`error retrieving possible tts voices: ${stringify(ttsVoiceList)}`);
+    throw new Error(`error retrieving possible tts voices: ${JSON.stringify(ttsVoiceList)}`);
   }
 
   ttsVoiceList.voices.forEach((voice): void => {
@@ -47,13 +44,13 @@ export const getVoices = async (
       || voice.ssmlGender === undefined
       || voice.ssmlGender === null
     ) {
-      throw new Error(`list voice request was missing fields: ${stringify(voice)}`);
+      throw new Error(`list voice request was missing fields: ${JSON.stringify(voice)}`);
     }
     if (voice.name.includes("Standard")) {
       return;
     }
     if (typeof voice.ssmlGender !== "string") {
-      throw new Error(`list voice request had bad gender field: ${stringify(voice)}`);
+      throw new Error(`list voice request had bad gender field: ${JSON.stringify(voice)}`);
     }
 
     voiceOptions.voiceVariants.add(voice.name);

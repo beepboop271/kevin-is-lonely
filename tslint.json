@@ -18,6 +18,7 @@
 
     // always active
     "increment-decrement": false,
+    "linebreak-style": false,  // git takes care of this
     "max-classes-per-file": false,
     "member-ordering": [true, { "order": "fields-first" }],
     "newline-per-chained-call": false,
