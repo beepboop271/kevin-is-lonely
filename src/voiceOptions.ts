@@ -1,5 +1,4 @@
-// tslint:disable-next-line:no-submodule-imports
-import { TextToSpeechClient } from "@google-cloud/text-to-speech/build/src/v1";
+import type { v1 } from "@google-cloud/text-to-speech";
 
 export interface IVoice {
   name: string;
@@ -14,7 +13,7 @@ export interface IVoiceOptions {
 }
 
 export const getVoices = async (
-  ttsClient: TextToSpeechClient,
+  ttsClient: v1.TextToSpeechClient,
 ): Promise<IVoiceOptions> => {
   console.time("Retrieving TTS voices from Google");
   const [ttsVoiceList] = await ttsClient.listVoices({});

@@ -46,14 +46,12 @@ export class ServerTtsConfig extends ServerConfig<ITtsRequest> {
             break;
           case "list":
             if (args[1] === "current") {
-              await msg.channel.send(embeds.voiceList.get(userConfig.lang.split("-")[0]));
+              const voiceHelpEmbed = embeds.voiceList.get(userConfig.lang.split("-")[0]);
+              // validation already done when setting the voice
+              await msg.channel.send(voiceHelpEmbed!);
             }
             break;
           case "disconnect":
-            this.die();
-
-            return true;
-          case "fuckoff":
             this.die();
 
             return true;
@@ -66,7 +64,7 @@ export class ServerTtsConfig extends ServerConfig<ITtsRequest> {
               if (e instanceof Error) {
                 await msg.reply(e.message);
               } else {
-                await msg.reply(e);
+                await msg.reply(JSON.stringify(e));
               }
             }
             break;
@@ -77,7 +75,7 @@ export class ServerTtsConfig extends ServerConfig<ITtsRequest> {
               if (e instanceof Error) {
                 await msg.reply(e.message);
               } else {
-                await msg.reply(e);
+                await msg.reply(JSON.stringify(e));
               }
             }
             break;
@@ -88,7 +86,7 @@ export class ServerTtsConfig extends ServerConfig<ITtsRequest> {
               if (e instanceof Error) {
                 await msg.reply(e.message);
               } else {
-                await msg.reply(e);
+                await msg.reply(JSON.stringify(e));
               }
             }
             break;
