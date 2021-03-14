@@ -2,6 +2,8 @@
 
 A Discord bot which allows people without a mic to "speak" in voice channels, using TTS.
 
+### Note: Google Cloud Text to Speech now requires billing enabled to use the free quota, so you can't just run this with a completely free project (free usage quota is the same, you just need to put a billing method on the project to use the quota).
+
 Backstory: I don't really use a mic or like to talk so I just sit in voice channels and listen to my friends do whatever. Sometimes when I need to talk, I'll just type into a text channel. However, this only works when the other people in the voice channel can easily look at Discord, something not very practical when others are playing games for example. Then one day, we decided to create a channel #kevin-is-lonely because when I sent text messages to talk to people in a voice channel it would look like I'm talking to myself. Someone had the great idea of making a bot to read messages that I sent to #kevin-is-lonely so that i could "speak" in the voice channel, and here it is :p
 
 ## Features:
