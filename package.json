@@ -5,7 +5,7 @@
   "type": "module",
   "main": "dist/notLonely.js",
   "dependencies": {
-    "@discordjs/opus": "^0.3.3",
+    "@discordjs/opus": "^0.8.0",
     "@google-cloud/text-to-speech": "^3.1.1",
     "bufferutil": "^4.0.2",
     "chalk": "^4.1.0",
